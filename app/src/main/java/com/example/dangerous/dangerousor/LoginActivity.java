@@ -3,18 +3,18 @@ package com.example.dangerous.dangerousor;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -29,8 +29,8 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.google.android.gms.iid.InstanceID;
 import com.google.gson.Gson;
 
 import java.io.BufferedReader;
@@ -38,10 +38,15 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -72,6 +77,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+
+    private String token;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,6 +119,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
+        token = InstanceID.getInstance(this).getId();
     }
 
     private void populateAutoComplete() {
@@ -205,14 +214,39 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
+            mAuthTask = new UserLoginTask(email, password, token);
             mAuthTask.execute((Void) null);
         }
     }
 
     private boolean isEmailValid(String email) {
         //TODO: Replace this with your own logic
-        return email.contains("@");
+        int count = 0;
+        Pattern p = Pattern.compile("@");
+        Matcher m = p.matcher(email);
+        while (m.find()) {
+            count++;
+        }
+        if(count!=1)
+            return false;
+        int count2 = 0;
+        Pattern p2 = Pattern.compile("\\.");
+        Matcher m2 = p2.matcher(email.split("@")[1]);
+        while (m2.find()) {
+            count2++;
+        }
+        if(count2==0)
+            return false;
+        int count3 = 0;
+        Matcher m3 = p2.matcher(email.split("@")[0]);
+        while (m3.find()) {
+            count3++;
+        }
+        if(count3>0)
+            return false;
+        String regex="[a-zA-Z0-9]+";
+        Matcher x = Pattern.compile(regex).matcher(email.replace("@", "").replace(".", ""));
+        return x.matches() ;
     }
 
     private boolean isPasswordValid(String password) {
@@ -318,15 +352,23 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         private final String mEmail;
         private final String mPassword;
+        private final String mtoken;
         private CheckLogin checkLogin;
 
         class CheckLogin {
             private String content;
             private boolean success;
+            private String bitmap;
 
 
             public String getContent() {
-                return content;
+                String temp = content;
+                try {
+                    temp = URLDecoder.decode(temp, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                return temp;
             }
 
             public void setContent(String content) {
@@ -340,11 +382,20 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             public void setSuccess(boolean success) {
                 this.success = success;
             }
+
+            public String getBitmap() {
+                return bitmap;
+            }
+
+            public void setBitmap(String bitmap) {
+                this.bitmap = bitmap;
+            }
         }
 
-        UserLoginTask(String email, String password) {
+        UserLoginTask(String email, String password, String token) {
             mEmail = email;
             mPassword = password;
+            mtoken = token;
         }
 
         @Override
@@ -355,14 +406,14 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             try {
                 // Simulate network access.
 //                Thread.sleep(2000);
-                URL url = new URL("http://111.231.100.212/login");
+                URL url = new URL("http://" + Const.IP + "/login");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setConnectTimeout(8000);
                 connection.setReadTimeout(8000);
                 connection.setDoOutput(true);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-                out.writeBytes(String.format("username=%s&password=%s", mEmail, mPassword));
+                out.writeBytes(String.format("username=%s&password=%s&token=%s", mEmail, mPassword, mtoken));
                 InputStream in = connection.getInputStream();
                 BufferedReader reader;
                 reader = new BufferedReader(new InputStreamReader(in));
@@ -402,6 +453,16 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
             if (success) {
                 finish();
+                SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                SharedPreferences.Editor editor = pref.edit();
+                editor.putString("account", checkLogin.getContent());
+                editor.putString("email", mEmail);
+                editor.putString("password", mPassword);
+                if(checkLogin.getBitmap() != null)
+                    editor.putString("bitmap", checkLogin.getBitmap());
+                else
+                    editor.remove("bitmap");
+                editor.apply();
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                 startActivity(intent);
             } else {
