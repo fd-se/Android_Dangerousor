@@ -110,11 +110,6 @@ public class StartActivity extends AppCompatActivity {
 
         @Override
         protected void onProgressUpdate(Void... values){
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
             super.onProgressUpdate(values);
         }
 
@@ -123,10 +118,20 @@ public class StartActivity extends AppCompatActivity {
             mAuthTask = null;
 
             if (success) {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 finish();
                 Intent intent = new Intent(StartActivity.this, MainActivity.class);
                 startActivity(intent);
             } else {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 finish();
                 Intent intent = new Intent(StartActivity.this, LoginActivity.class);
                 startActivity(intent);
