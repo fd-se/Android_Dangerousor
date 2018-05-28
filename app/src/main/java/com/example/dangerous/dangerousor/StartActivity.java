@@ -1,8 +1,10 @@
 package com.example.dangerous.dangerousor;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 
 import com.google.android.gms.iid.InstanceID;
@@ -124,6 +126,12 @@ public class StartActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 finish();
+                SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(StartActivity.this);
+                SharedPreferences.Editor editor = pref.edit();
+                editor.putString("account", checkLogin.getContent());
+//                editor.putString("email", mEmail);
+//                editor.putString("password", mPassword);
+                editor.apply();
                 Intent intent = new Intent(StartActivity.this, MainActivity.class);
                 startActivity(intent);
             } else {

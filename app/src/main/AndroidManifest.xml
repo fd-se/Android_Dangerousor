@@ -33,15 +33,12 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".LoginActivity"
-            android:label="@string/app_name">
-        </activity>
-        <activity android:name=".RegisterActivity"
-            android:label="@string/app_name"/>
-        <activity android:name=".MainActivity"
-            android:label="@string/app_name"/>
-
-
-        <activity android:name=".StartActivity"
+            android:label="@string/app_name"></activity>
+        <activity
+            android:name=".RegisterActivity"
+            android:label="@string/app_name" />
+        <activity
+            android:name=".StartActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBarWithBackGround">
             <intent-filter>
@@ -52,9 +49,13 @@
         </activity>
 
         <meta-data
-        android:name="TencentMapSDK"
-        android:value="XEYBZ-QH7C6-KLQSJ-EQ62M-WRO3Q-VYBJV" />
+            android:name="TencentMapSDK"
+            android:value="XEYBZ-QH7C6-KLQSJ-EQ62M-WRO3Q-VYBJV" />
 
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main2"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

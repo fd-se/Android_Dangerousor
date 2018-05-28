@@ -4,15 +4,18 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import com.google.android.gms.iid.InstanceID;
 import com.google.gson.Gson;
@@ -31,6 +34,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     // UI references.
     private AutoCompleteTextView mEmailView;
+    private TextView mNickname;
     private EditText mPasswordView;
     private EditText mPasswordView2;
     private View mProgressView;
@@ -46,6 +50,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         mPasswordView = findViewById(R.id.register_password);
         mPasswordView2 = findViewById(R.id.register_password2);
+        mNickname = findViewById(R.id.nick_name);
 //        mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 //            @Override
 //            public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
@@ -75,11 +80,13 @@ public class RegisterActivity extends AppCompatActivity {
         }
 
         // Reset errors.
+        mNickname.setError(null);
         mEmailView.setError(null);
         mPasswordView.setError(null);
         mPasswordView2.setError(null);
 
         // Store values at the time of the login attempt.
+        String nickname = mNickname.getText().toString();
         String email = mEmailView.getText().toString();
         String password = mPasswordView.getText().toString();
         String password2 = mPasswordView2.getText().toString();
@@ -94,7 +101,19 @@ public class RegisterActivity extends AppCompatActivity {
             cancel = true;
         }
 
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password, password2)) {
+        if (!TextUtils.isEmpty(password2) && !isPasswordValid(password2)) {
+            mPasswordView2.setError(getString(R.string.error_invalid_password));
+            focusView = mPasswordView2;
+            cancel = true;
+        }
+
+        if (!TextUtils.isEmpty(nickname) && !isNicknameValid(nickname)) {
+            mNickname.setError(getString(R.string.error_invalid_nickname));
+            focusView = mNickname;
+            cancel = true;
+        }
+
+        if (!TextUtils.isEmpty(password) && !isPasswordValid(password, password2) && !TextUtils.isEmpty(password2)) {
             mPasswordView2.setError(getString(R.string.error_different_password));
             focusView = mPasswordView2;
             cancel = true;
@@ -111,6 +130,12 @@ public class RegisterActivity extends AppCompatActivity {
             cancel = true;
         }
 
+        if (TextUtils.isEmpty(nickname)) {
+            mNickname.setError(getString(R.string.error_field_required));
+            focusView = mNickname;
+            cancel = true;
+        }
+
         if (cancel) {
             // There was an error; don't attempt login and focus the first
             // form field with an error.
@@ -119,7 +144,7 @@ public class RegisterActivity extends AppCompatActivity {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserRegisterTask(email, password, token);
+            mAuthTask = new UserRegisterTask(nickname, email, password, token);
             mAuthTask.execute((Void) null);
         }
     }
@@ -132,6 +157,11 @@ public class RegisterActivity extends AppCompatActivity {
     private boolean isPasswordValid(String password) {
         //TODO: Replace this with your own logic
         return password.length() > 4;
+    }
+
+    private boolean isNicknameValid(String nickname) {
+        //TODO: Replace this with your own logic
+        return nickname.length() < 12;
     }
 
     private boolean isPasswordValid(String password, String password2) {
@@ -174,6 +204,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     public class UserRegisterTask extends AsyncTask<Void, Void, Boolean> {
 
+        private final String nickname;
         private final String mEmail;
         private final String mPassword;
         private final String token;
@@ -201,9 +232,10 @@ public class RegisterActivity extends AppCompatActivity {
             }
         }
 
-        UserRegisterTask(String email, String password, String token) {
-            mEmail = email;
-            mPassword = password;
+        UserRegisterTask(String nickname, String email, String password, String token) {
+            this.nickname = nickname;
+            this.mEmail = email;
+            this.mPassword = password;
             this.token = token;
         }
 
@@ -222,7 +254,7 @@ public class RegisterActivity extends AppCompatActivity {
                 connection.setReadTimeout(8000);
                 connection.setDoOutput(true);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-                out.writeBytes(String.format("username=%s&password=%s&token=%s", mEmail, mPassword, token));
+                out.writeBytes(String.format("nickname=%s&username=%s&password=%s&token=%s", this.nickname, this.mEmail, this.mPassword, this.token));
                 InputStream in = connection.getInputStream();
                 BufferedReader reader;
                 reader = new BufferedReader(new InputStreamReader(in));
@@ -262,6 +294,12 @@ public class RegisterActivity extends AppCompatActivity {
 
             if (success) {
                 finish();
+                SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(RegisterActivity.this);
+                SharedPreferences.Editor editor = pref.edit();
+                editor.putString("account", checkRegister.getContent());
+                editor.putString("email", mEmail);
+                editor.putString("password", mPassword);
+                editor.apply();
                 Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
                 startActivity(intent);
             } else {
