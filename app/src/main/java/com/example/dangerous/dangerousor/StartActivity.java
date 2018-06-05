@@ -39,6 +39,7 @@ public class StartActivity extends AppCompatActivity {
         class CheckLogin {
             private String content;
             private boolean success;
+            private String bitmap;
 
 
             public String getContent() {
@@ -55,6 +56,14 @@ public class StartActivity extends AppCompatActivity {
 
             public void setSuccess(boolean success) {
                 this.success = success;
+            }
+
+            public String getBitmap() {
+                return bitmap;
+            }
+
+            public void setBitmap(String bitmap) {
+                this.bitmap = bitmap;
             }
         }
 
@@ -129,6 +138,10 @@ public class StartActivity extends AppCompatActivity {
                 SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(StartActivity.this);
                 SharedPreferences.Editor editor = pref.edit();
                 editor.putString("account", checkLogin.getContent());
+                if(checkLogin.getBitmap() != null)
+                    editor.putString("bitmap", checkLogin.getBitmap());
+                else
+                    editor.remove("bitmap");
 //                editor.putString("email", mEmail);
 //                editor.putString("password", mPassword);
                 editor.apply();

@@ -5,10 +5,12 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Base64;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -19,6 +21,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.iid.InstanceID;
@@ -44,9 +47,13 @@ public class MainActivity extends AppCompatActivity
     private TextView textView;
     private TencentLocationManager locationManager;
     private TextView accountNickname;
+    private TextView accountEmail;
+    private ImageView accountBitmap;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private String nickName;
+    private String eMail;
+    private String bitMap;
     private String token;
 
     @Override
@@ -60,12 +67,22 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         View headerView = navigationView.getHeaderView(0);
         accountNickname = headerView.findViewById(R.id.account_nickname);
+        accountEmail = headerView.findViewById(R.id.account_email);
+        accountBitmap = headerView.findViewById(R.id.account_bitmap);
         Button buttonLocate = findViewById(R.id.buttonLocate);
         textView = findViewById(R.id.text_view);
         locationManager = TencentLocationManager.getInstance(this);
         nickName = sharedPreferences.getString("account", "");
+        eMail = sharedPreferences.getString("email", "");
+        String bitmap = sharedPreferences.getString("bitmap", "");
         token = InstanceID.getInstance(this).getId();
         accountNickname.setText(nickName);
+        accountEmail.setText(eMail);
+        if(!bitmap.equals(""))
+        {
+            byte[] bytes = Base64.decode(bitmap, Base64.DEFAULT);
+            accountBitmap.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
+        }
         if (Build.VERSION.SDK_INT >= 23) {
             String[] permissions = {
                     Manifest.permission.ACCESS_COARSE_LOCATION,

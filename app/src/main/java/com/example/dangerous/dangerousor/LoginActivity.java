@@ -30,6 +30,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.google.android.gms.iid.InstanceID;
 import com.google.gson.Gson;
 
 import java.io.BufferedReader;
@@ -72,6 +73,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private View mProgressView;
     private View mLoginFormView;
 
+    private String token;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,6 +114,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
+        token = InstanceID.getInstance(this).getId();
     }
 
     private void populateAutoComplete() {
@@ -204,7 +209,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
+            mAuthTask = new UserLoginTask(email, password, token);
             mAuthTask.execute((Void) null);
         }
     }
@@ -317,11 +322,13 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         private final String mEmail;
         private final String mPassword;
+        private final String mtoken;
         private CheckLogin checkLogin;
 
         class CheckLogin {
             private String content;
             private boolean success;
+            private String bitmap;
 
 
             public String getContent() {
@@ -339,11 +346,20 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             public void setSuccess(boolean success) {
                 this.success = success;
             }
+
+            public String getBitmap() {
+                return bitmap;
+            }
+
+            public void setBitmap(String bitmap) {
+                this.bitmap = bitmap;
+            }
         }
 
-        UserLoginTask(String email, String password) {
+        UserLoginTask(String email, String password, String token) {
             mEmail = email;
             mPassword = password;
+            mtoken = token;
         }
 
         @Override
@@ -361,7 +377,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 connection.setReadTimeout(8000);
                 connection.setDoOutput(true);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-                out.writeBytes(String.format("username=%s&password=%s", mEmail, mPassword));
+                out.writeBytes(String.format("username=%s&password=%s&token=%s", mEmail, mPassword, mtoken));
                 InputStream in = connection.getInputStream();
                 BufferedReader reader;
                 reader = new BufferedReader(new InputStreamReader(in));
@@ -406,6 +422,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 editor.putString("account", checkLogin.getContent());
                 editor.putString("email", mEmail);
                 editor.putString("password", mPassword);
+                if(checkLogin.getBitmap() != null)
+                    editor.putString("bitmap", checkLogin.getBitmap());
+                else
+                    editor.remove("bitmap");
                 editor.apply();
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                 startActivity(intent);
