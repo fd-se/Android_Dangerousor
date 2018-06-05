@@ -213,7 +213,6 @@ public class RegisterActivity extends AppCompatActivity {
         class CheckRegister {
             private String content;
             private boolean success;
-            private String bitmap;
 
 
             public String getContent() {
@@ -230,14 +229,6 @@ public class RegisterActivity extends AppCompatActivity {
 
             public void setSuccess(boolean success) {
                 this.success = success;
-            }
-
-            public String getBitmap() {
-                return bitmap;
-            }
-
-            public void setBitmap(String bitmap) {
-                this.bitmap = bitmap;
             }
         }
 
@@ -308,10 +299,6 @@ public class RegisterActivity extends AppCompatActivity {
                 editor.putString("account", checkRegister.getContent());
                 editor.putString("email", mEmail);
                 editor.putString("password", mPassword);
-                if(checkRegister.getBitmap() != null)
-                    editor.putString("bitmap", checkRegister.getBitmap());
-                else
-                    editor.remove("bitmap");
                 editor.apply();
                 Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
                 startActivity(intent);
