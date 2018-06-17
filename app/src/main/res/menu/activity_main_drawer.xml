@@ -5,17 +5,17 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_camera"
+            android:id="@+id/nav_changepic"
             android:icon="@drawable/ic_menu_camera"
-            android:title="Import" />
+            android:title="修改头像" />
         <item
-            android:id="@+id/nav_gallery"
+            android:id="@+id/nav_changenick"
             android:icon="@drawable/ic_menu_gallery"
-            android:title="Gallery" />
+            android:title="修改昵称" />
         <item
-            android:id="@+id/nav_slideshow"
+            android:id="@+id/nav_changepw"
             android:icon="@drawable/ic_menu_slideshow"
-            android:title="Slideshow" />
+            android:title="修改密码" />
         <item
             android:id="@+id/nav_manage"
             android:icon="@drawable/ic_menu_manage"

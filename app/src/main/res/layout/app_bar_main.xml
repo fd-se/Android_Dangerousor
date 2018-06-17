@@ -20,7 +20,24 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <include layout="@layout/content_main" />
+    <include
+        android:id="@+id/content_main"
+        layout="@layout/content_main"
+        android:visibility="visible" />
 
+    <include
+        android:id="@+id/change_pic"
+        layout="@layout/change_pic"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/change_pw"
+        layout="@layout/change_pw"
+        android:visibility="gone"/>
+
+    <include
+        android:id="@+id/change_nick"
+        layout="@layout/change_nick"
+        android:visibility="gone"/>
 
 </android.support.design.widget.CoordinatorLayout>
