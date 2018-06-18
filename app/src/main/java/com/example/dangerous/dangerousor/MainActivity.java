@@ -37,6 +37,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.iid.InstanceID;
 import com.google.gson.Gson;
+import com.qiniu.pili.droid.shortvideo.PLShortVideoRecorder;
 import com.tencent.map.geolocation.TencentLocation;
 import com.tencent.map.geolocation.TencentLocationListener;
 import com.tencent.map.geolocation.TencentLocationManager;
@@ -119,10 +120,18 @@ public class MainActivity extends AppCompatActivity
 
         if(!bitMap.equals(""))
         {
-            byte[] bytes = Base64.decode(bitMap, Base64.NO_WRAP);
-            bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-            accountBitmap.setImageBitmap(bitmap);
-            accountBitmap2.setImageBitmap(bitmap);
+            try {
+                bitMap = bitMap.replace(' ', '+');
+                byte[] bytes = Base64.decode(bitMap, Base64.NO_PADDING);
+                bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                accountBitmap.setImageBitmap(bitmap);
+                accountBitmap2.setImageBitmap(bitmap);
+            } catch (Exception e){
+                e.printStackTrace();
+                bitMap = "";
+                editor.putString("bitmap", "");
+                editor.apply();
+            }
         }
         if (Build.VERSION.SDK_INT >= 23) {
             String[] permissions = {
@@ -206,14 +215,14 @@ public class MainActivity extends AppCompatActivity
                 try {
                     if (bitmap != null) {
                         baos = new ByteArrayOutputStream();
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 30, baos);
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
 
                         baos.flush();
                         baos.close();
 
                         byte[] bitmapBytes = baos.toByteArray();
-                        result = Base64.encodeToString(bitmapBytes, Base64.NO_WRAP);
-                        bitMap = result;
+                        byte[] encode = Base64.encode(bitmapBytes, Base64.NO_PADDING);
+                        bitMap = new String(encode);
 
                         ChangeTask mTask = new ChangeTask(token, bitMap, "", "");
                         mTask.execute((Void) null);
@@ -390,7 +399,9 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_record) {
+            Intent intent = new Intent(MainActivity.this, RecordVideo.class);
+            startActivity(intent);
             return true;
         }
 
@@ -458,7 +469,7 @@ public class MainActivity extends AppCompatActivity
                 if (!cameraPermissionGranted) {
                     size++;
                 }
-                if (size == 1) {
+                if (size == 0) {
                     granted = true;
                     onResume();
                 }else{

@@ -3,4 +3,73 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+
+    <color name="colorTextBG">#cc222222</color>
+    <color name="colorSpeedPanel">#99222222</color>
+
+    <color name="white">#FFFFFF</color>
+    <color name="red">#FF0000</color>
+
+    <color name="text1">#FFFFFF</color>
+    <color name="text2">#ffefa8</color>
+    <color name="text3">#fccaff</color>
+    <color name="text4">#61dcff</color>
+    <color name="text5">#ffc502</color>
+    <color name="text6">#ff8621</color>
+    <color name="text7">#ff696a</color>
+    <color name="text8">#7777ff</color>
+    <color name="text9">#ff8621</color>
+    <color name="text10">#00ff00</color>
+    <color name="text11">#ff0000</color>
+    <color name="text12">#0000ff</color>
+
+    <color name="paint1">#FFFFFF</color>
+    <color name="paint2">#000000</color>
+    <color name="paint3">#ffefa8</color>
+    <color name="paint4">#fccaff</color>
+    <color name="paint5">#61dcff</color>
+    <color name="paint6">#ffc502</color>
+    <color name="paint7">#ff8621</color>
+    <color name="paint8">#7777ff</color>
+    <color name="paint9">#00ff00</color>
+    <color name="paint10">#0000ff</color>
+
+    <color name="effectBar1">#ffefa8</color>
+    <color name="effectBar2">#fccaff</color>
+    <color name="effectBar3">#61dcff</color>
+    <color name="effectBar4">#ffc502</color>
+    <color name="effectBar5">#ff8621</color>
+    <color name="effectBar6">#7777ff</color>
+
+    <color name="speedTextNormal">#ffdddddd</color>
+    <color name="textSelectorBG">#2d2b39</color>
+
+    <color name="transitionSelectorBG">#575558</color>
+    <color name="sectionDrawColor">#80575558</color>
+    <color name="frameSelectorBorder">#ffffff</color>
+    <color name="frameSelectorBody">#8061dcff</color>
+    <color name="videoFrameActivityMiddleBG">#222222</color>
+    <color name="videoFrameActivityBottomBG">#1a1a1a</color>
+
+    <color name="transparent">#00000000</color>
+
+    <color name="filter_color_blue">#ff5cbadc</color>
+    <color name="filter_color_blue_dark">#3d5afe</color>
+    <color name="filter_color_blue_dark_dark">#1e3250</color>
+    <color name="filter_color_red">#ff6666</color>
+    <color name="filter_color_red_dark">#b93221</color>
+    <color name="filter_color_orange">#fe9833</color>
+    <color name="filter_color_pink">#cc99cc</color>
+    <color name="filter_color_grey_light">#c4c4c4</color>
+    <color name="filter_color_yellow_dark">#c8ca34</color>
+    <color name="filter_color_green_dark">#568f35</color>
+    <color name="filter_color_brown_dark">#e69138</color>
+    <color name="filter_color_brown">#c8ca34</color>
+    <color name="filter_color_brown_light">#ff9933</color>
+
+    <color name="half_transparent_black">#44000000</color>
+    <color name="half_transparent_white">#44ffffff</color>
+
+    <color name="sticker_select_border">#009688</color>
+
 </resources>
