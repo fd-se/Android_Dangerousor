@@ -460,9 +460,9 @@ public class RecordVideo extends AppCompatActivity implements View.OnClickListen
         //设置立体声
 //        mediaRecorder.setAudioChannels(2);
         //设置最大录像时间 单位：毫秒
-//        mediaRecorder.setMaxDuration(60 * 1000);
+        mediaRecorder.setMaxDuration(10 * 1000);
         //设置最大录制的大小 单位，字节
-//        mediaRecorder.setMaxFileSize(1024 * 1024);
+        mediaRecorder.setMaxFileSize(3 * 1024 * 1024);
         //音频一秒钟包含多少数据位
         CamcorderProfile mProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
         mediaRecorder.setAudioEncodingBitRate(44100);
