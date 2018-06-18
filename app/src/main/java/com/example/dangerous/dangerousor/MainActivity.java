@@ -1,7 +1,6 @@
 package com.example.dangerous.dangerousor;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -16,32 +15,28 @@ import android.os.Environment;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.text.TextUtils;
-import android.util.Base64;
-import android.view.View;
-import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
+import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.google.android.gms.iid.InstanceID;
 import com.google.gson.Gson;
-import com.qiniu.pili.droid.shortvideo.PLShortVideoRecorder;
-import com.tencent.map.geolocation.TencentLocation;
-import com.tencent.map.geolocation.TencentLocationListener;
-import com.tencent.map.geolocation.TencentLocationManager;
-import com.tencent.map.geolocation.TencentLocationRequest;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -53,10 +48,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, TencentLocationListener {
+        implements NavigationView.OnNavigationItemSelectedListener {
     private UserLogoutTask mAuthTask = null;
 
     private final int GET_PERMISSION_REQUEST = 100; //权限申请自定义码
@@ -64,13 +58,12 @@ public class MainActivity extends AppCompatActivity
     private File sdCard;
     private File headpic;
 
-    private TencentLocation mLocation;
-    private TextView textView;
-    private TencentLocationManager locationManager;
     private TextView accountNickname;
     private TextView accountEmail;
     private ImageView accountBitmap;
     private ImageView accountBitmap2;
+    private ImageView reviewframe;
+    private VideoView videocontent;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private String nickName;
@@ -102,13 +95,12 @@ public class MainActivity extends AppCompatActivity
         accountEmail = headerView.findViewById(R.id.account_email);
         accountBitmap = headerView.findViewById(R.id.account_bitmap);
         accountBitmap2 = findViewById(R.id.account_bitmap2);
-        Button buttonLocate = findViewById(R.id.buttonLocate);
-        textView = findViewById(R.id.text_view);
+        reviewframe = findViewById(R.id.reviewframe);
+        videocontent = findViewById(R.id.videocontent);
         content_main = findViewById(R.id.content_main);
         change_pic = findViewById(R.id.change_pic);
         change_nick = findViewById(R.id.change_nick);
         change_pw = findViewById(R.id.change_pw);
-        locationManager = TencentLocationManager.getInstance(this);
         nickName = sharedPreferences.getString("account", "");
         eMail = sharedPreferences.getString("email", "");
         bitMap = sharedPreferences.getString("bitmap", "");
@@ -145,16 +137,6 @@ public class MainActivity extends AppCompatActivity
                 requestPermissions(permissions, 0);
             }
         }
-
-
-        buttonLocate.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                TencentLocationRequest request = TencentLocationRequest.create();
-                int error = locationManager.requestLocationUpdates(request.setRequestLevel(TencentLocationRequest.REQUEST_LEVEL_NAME).setInterval(500).setAllowDirection(true), MainActivity.this);
-                textView.setText(String.format("%d", error));
-            }
-        });
 
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
@@ -480,26 +462,9 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @SuppressLint("SetTextI18n")
-    @Override
-    public void onLocationChanged(TencentLocation location, int error, String reason) {
-        if (error == TencentLocation.ERROR_OK) {
-            // 定位成功
-            mLocation = location;
-            // 更新 status
-            textView.setText("(纬度=" + location.getLatitude() + ",经度=" + location.getLongitude() + ",精度=" + location.getAccuracy() + "), 来源=" + location.getProvider() + ", 地址=" + location.getAddress());
-        }
-    }
-
-    @Override
-    public void onStatusUpdate(String name, int status, String desc) {
-        // do your work
-    }
-
     @Override
     protected void onDestroy(){
         super.onDestroy();
-        locationManager.removeUpdates(this);
     }
 
     public class UserLogoutTask extends AsyncTask<Void, Void, Boolean> {

@@ -1,8 +1,11 @@
 package com.example.dangerous.dangerousor;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Environment;
@@ -16,10 +19,14 @@ import android.widget.Toast;
 
 import com.example.dangerous.dangerousor.util.mMediaController;
 import com.example.dangerous.dangerousor.view.MyVideoView;
+import com.tencent.map.geolocation.TencentLocation;
+import com.tencent.map.geolocation.TencentLocationListener;
+import com.tencent.map.geolocation.TencentLocationManager;
+import com.tencent.map.geolocation.TencentLocationRequest;
 
 import java.io.File;
 
-public class PlayVideoActivity extends AppCompatActivity implements MediaPlayer.OnPreparedListener, mMediaController.MediaPlayerControl{
+public class PlayVideoActivity extends AppCompatActivity implements MediaPlayer.OnPreparedListener, mMediaController.MediaPlayerControl, TencentLocationListener {
     public static final String TAG = "PlayVideo";
     private MyVideoView videoView;
     private mMediaController controller;
@@ -27,6 +34,11 @@ public class PlayVideoActivity extends AppCompatActivity implements MediaPlayer.
     private EditText editText;
     private Button confirm;
     private Button cancel;
+
+    private TencentLocation mLocation;
+    private String location;
+    private TencentLocationManager locationManager;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -49,6 +61,8 @@ public class PlayVideoActivity extends AppCompatActivity implements MediaPlayer.
         editText = findViewById(R.id.record_video_title);
         confirm = findViewById(R.id.record_upload);
         cancel = findViewById(R.id.record_cancel);
+        locationManager = TencentLocationManager.getInstance(this);
+
 
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -68,7 +82,15 @@ public class PlayVideoActivity extends AppCompatActivity implements MediaPlayer.
                         Toast.makeText(PlayVideoActivity.this, "Title should be no more than 10", Toast.LENGTH_LONG).show();
                     }
                     else{
+                        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+                        retriever.setDataSource(mVideoPath);
+                        Bitmap bmp = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
 
+                        TencentLocationRequest request = TencentLocationRequest.create();
+                        int error = locationManager.requestLocationUpdates(request.setRequestLevel(TencentLocationRequest.REQUEST_LEVEL_NAME).setInterval(500).setAllowDirection(true), PlayVideoActivity.this);
+                        if(error != 0){
+                            location = null;
+                        }
                     }
                 }
             }
@@ -186,5 +208,28 @@ public class PlayVideoActivity extends AppCompatActivity implements MediaPlayer.
     public void onBackPressed() {
 
     }
+
+    @SuppressLint("SetTextI18n")
+    @Override
+    public void onLocationChanged(TencentLocation location, int error, String reason) {
+        if (error == TencentLocation.ERROR_OK) {
+            // 定位成功
+            mLocation = location;
+            // 更新 status
+            this.location = location.getAddress();
+        }
+    }
+
+    @Override
+    public void onStatusUpdate(String name, int status, String desc) {
+        // do your work
+    }
+
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        locationManager.removeUpdates(this);
+    }
+
 
 }

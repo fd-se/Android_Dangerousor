@@ -30,7 +30,4 @@ dependencies {
     implementation files('libs/TencentLocationSdk_v6.2.5.3_r15b3b3cc_20171103_115903.jar')
     //    implementation "com.google.firebase:firebase-messaging:15.0.2"
     implementation 'com.google.android.gms:play-services-gcm:15.0.1'
-    implementation files('libs/pldroid-player-2.1.4.jar')
-    implementation files('libs/pldroid-shortvideo-1.10.0.jar')
-    implementation files('libs/isoviewer-1.0-RC-27.jar')
 }
