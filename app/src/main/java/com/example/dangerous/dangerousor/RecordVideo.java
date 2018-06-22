@@ -464,7 +464,7 @@ public class RecordVideo extends AppCompatActivity implements View.OnClickListen
         //设置最大录制的大小 单位，字节
         mediaRecorder.setMaxFileSize(3 * 1024 * 1024);
         //音频一秒钟包含多少数据位
-        CamcorderProfile mProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
+        CamcorderProfile mProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_1080P);
         mediaRecorder.setAudioEncodingBitRate(44100);
         if (mProfile.videoBitRate > 2 * 1024 * 1024)
             mediaRecorder.setVideoEncodingBitRate(2 * 1024 * 1024);

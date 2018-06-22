@@ -6,7 +6,9 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -28,13 +30,16 @@ import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.webkit.DownloadListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.VideoView;
 
+import com.example.dangerous.dangerousor.util.mMediaController;
+import com.example.dangerous.dangerousor.view.MyVideoView;
 import com.google.android.gms.iid.InstanceID;
 import com.google.gson.Gson;
 
@@ -43,14 +48,20 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+
+import static android.graphics.BitmapFactory.decodeByteArray;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, MediaPlayer.OnPreparedListener, mMediaController.MediaPlayerControl {
     private UserLogoutTask mAuthTask = null;
 
     private final int GET_PERMISSION_REQUEST = 100; //权限申请自定义码
@@ -58,12 +69,21 @@ public class MainActivity extends AppCompatActivity
     private File sdCard;
     private File headpic;
 
+    private Boolean first;
+    private Boolean first2 = true;
+
     private TextView accountNickname;
     private TextView accountEmail;
     private ImageView accountBitmap;
     private ImageView accountBitmap2;
     private ImageView reviewframe;
-    private VideoView videocontent;
+    private MyVideoView videoView;
+    private mMediaController controller;
+    private ImageView authorBitmap;
+    private TextView authorNick;
+    private TextView authorTitle;
+    private TextView authorLocation;
+    private Button nextVideo;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private String nickName;
@@ -75,10 +95,100 @@ public class MainActivity extends AppCompatActivity
     private View change_pic;
     private View change_nick;
     private View change_pw;
+    private View video_main;
+
+    private String fileName;
+    private String fileName2;
+
+    private DownloadTask.DetailCheck detailCheck;
+
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+        controller.setMediaPlayer(videoView);
+        controller.setAnchorView((ViewGroup) findViewById(R.id.fl_videoView_parent2));
+        controller.show();
+
+    }
+
+    @Override
+    public boolean canSeekForward() {
+        return videoView.canSeekForward();
+    }
+
+    @Override
+    public boolean canSeekBackward() {
+        return videoView.canSeekBackward();
+    }
+
+    @Override
+    public void start() {
+        videoView.start();
+    }
+
+    @Override
+    public void pause() {
+        if (videoView.isPlaying()) {
+            videoView.pause();
+        }
+    }
+
+    @Override
+    public int getDuration() {
+        return videoView.getDuration();
+    }
+
+    @Override
+    public int getCurrentPosition() {
+        return videoView.getCurrentPosition();
+    }
+
+    @Override
+    public void seekTo(int pos) {
+        videoView.seekTo(pos);
+    }
+
+    @Override
+    public boolean isPlaying() {
+        return videoView.isPlaying();
+    }
+
+    @Override
+    public int getBufferPercentage() {
+        return 0;
+    }
+
+    @Override
+    public boolean canPause() {
+        return videoView.canPause();
+    }
+
+    @Override
+    public boolean isFullScreen() {
+        return false;
+    }
+
+    @Override
+    public void toggleFullScreen() {
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        first = true;
+
+        if (Build.VERSION.SDK_INT >= 23) {
+            String[] permissions = {
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.READ_PHONE_STATE,
+            };
+
+            if (checkSelfPermission(permissions[0]) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(permissions, 0);
+            }
+        }
 
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
@@ -87,7 +197,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         editor = sharedPreferences.edit();
         NavigationView navigationView = findViewById(R.id.nav_view);
         View headerView = navigationView.getHeaderView(0);
@@ -96,11 +206,17 @@ public class MainActivity extends AppCompatActivity
         accountBitmap = headerView.findViewById(R.id.account_bitmap);
         accountBitmap2 = findViewById(R.id.account_bitmap2);
         reviewframe = findViewById(R.id.reviewframe);
-        videocontent = findViewById(R.id.videocontent);
+        videoView = findViewById(R.id.videocontent);
         content_main = findViewById(R.id.content_main);
         change_pic = findViewById(R.id.change_pic);
         change_nick = findViewById(R.id.change_nick);
         change_pw = findViewById(R.id.change_pw);
+        video_main = findViewById(R.id.videomain);
+        authorBitmap = findViewById(R.id.authorpic);
+        authorNick = findViewById(R.id.authornick);
+        authorTitle = findViewById(R.id.videotitle);
+        authorLocation = findViewById(R.id.videoplace);
+        nextVideo = findViewById(R.id.nextvideo);
         nickName = sharedPreferences.getString("account", "");
         eMail = sharedPreferences.getString("email", "");
         bitMap = sharedPreferences.getString("bitmap", "");
@@ -115,7 +231,7 @@ public class MainActivity extends AppCompatActivity
             try {
                 bitMap = bitMap.replace(' ', '+');
                 byte[] bytes = Base64.decode(bitMap, Base64.NO_PADDING);
-                bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                bitmap = decodeByteArray(bytes, 0, bytes.length);
                 accountBitmap.setImageBitmap(bitmap);
                 accountBitmap2.setImageBitmap(bitmap);
             } catch (Exception e){
@@ -123,18 +239,6 @@ public class MainActivity extends AppCompatActivity
                 bitMap = "";
                 editor.putString("bitmap", "");
                 editor.apply();
-            }
-        }
-        if (Build.VERSION.SDK_INT >= 23) {
-            String[] permissions = {
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.READ_PHONE_STATE,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-            };
-
-            if (checkSelfPermission(permissions[0]) != PackageManager.PERMISSION_GRANTED)
-            {
-                requestPermissions(permissions, 0);
             }
         }
 
@@ -192,7 +296,6 @@ public class MainActivity extends AppCompatActivity
         change_pic_confirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String result = null;
                 ByteArrayOutputStream baos = null;
                 try {
                     if (bitmap != null) {
@@ -240,6 +343,11 @@ public class MainActivity extends AppCompatActivity
                         Toast.makeText(MainActivity.this, "昵称不能长于11", Toast.LENGTH_LONG).show();
                     }
                     else{
+                        try {
+                            nickname = URLEncoder.encode(nickname, "UTF-8");
+                        } catch (UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                        }
                         ChangeTask mTask = new ChangeTask(token, "", nickname, "");
                         mTask.execute((Void) null);
                     }
@@ -277,6 +385,56 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        nextVideo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String bitMap;
+                try {
+                    bitMap = detailCheck.getPic().replace(' ', '+');
+                    byte[] bytes = Base64.decode(bitMap, Base64.NO_PADDING);
+                    authorBitmap.setImageBitmap(decodeByteArray(bytes, 0, bytes.length));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    bitMap = "";
+                    byte[] bytes = Base64.decode(bitMap, Base64.NO_PADDING);
+                    authorBitmap.setImageBitmap(decodeByteArray(bytes, 0, bytes.length));
+                }
+                authorNick.setText(detailCheck.getAuthor());
+                authorTitle.setText(detailCheck.getTitle());
+                authorLocation.setText(detailCheck.getPlace());
+                if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+                    videoView.stopPlayback();
+                    videoView.setVideoPath(Environment.getExternalStorageDirectory().toString() + "/DangerousorDownload/" + fileName2);//   /storage/emulated/0/RecordVideo/VID_20180618_181338.mp4
+                    videoView.start();
+                    videoView.requestFocus();
+                }
+                nextVideo.setVisibility(View.GONE);
+                DownloadTask mTask = new DownloadTask(token);
+                mTask.execute((Void) null);
+            }
+        });
+
+        reviewframe.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                reviewframe.setVisibility(View.GONE);
+                File file = new File(Environment.getExternalStorageDirectory().toString() + "/DangerousorDownload");
+                if (file.exists()) {
+                    String[] tempList = file.list();
+                    File temp;
+                    for (String aTempList : tempList) {
+                        temp = new File(Environment.getExternalStorageDirectory().toString() + "/DangerousorDownload/" + aTempList);
+                        if (temp.isFile()) {
+                            temp.delete();
+                        }
+                    }
+                }
+                DownloadTask downloadTask = new DownloadTask(token);
+                downloadTask.execute((Void) null);
+                Toast.makeText(MainActivity.this, "开始", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
                     ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
@@ -292,6 +450,29 @@ public class MainActivity extends AppCompatActivity
                 granted = false;
             }
         }
+
+        controller = new mMediaController(this);
+        videoView.setMediaController(controller);
+        videoView.setBackgroundColor(Color.BLACK);
+        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                mp.setOnInfoListener(new MediaPlayer.OnInfoListener() {
+                    @Override
+                    public boolean onInfo(MediaPlayer mp, int what, int extra) {
+                        if (what == MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
+                            videoView.setBackgroundColor(Color.TRANSPARENT);
+                        }
+                        return true;
+                    }
+                });
+                mp.setVideoScalingMode(MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT);
+                mp.start();
+                mp.setLooping(true);
+            }
+        });
+        controller.setMediaPlayer(videoView);
+
     }
 
     @Override
@@ -383,6 +564,7 @@ public class MainActivity extends AppCompatActivity
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_record) {
             Intent intent = new Intent(MainActivity.this, RecordVideo.class);
+            finish();
             startActivity(intent);
             return true;
         }
@@ -397,22 +579,29 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_changepic) {
+            videoView.pause();
             content_main.setVisibility(View.GONE);
             change_pw.setVisibility(View.GONE);
             change_nick.setVisibility(View.GONE);
             change_pic.setVisibility(View.VISIBLE);
         } else if (id == R.id.nav_changenick) {
+            videoView.pause();
             content_main.setVisibility(View.GONE);
             change_pw.setVisibility(View.GONE);
             change_nick.setVisibility(View.VISIBLE);
             change_pic.setVisibility(View.GONE);
         } else if (id == R.id.nav_changepw) {
+            videoView.pause();
             content_main.setVisibility(View.GONE);
             change_pw.setVisibility(View.VISIBLE);
             change_nick.setVisibility(View.GONE);
             change_pic.setVisibility(View.GONE);
         } else if (id == R.id.nav_manage) {
-
+            videoView.start();
+            content_main.setVisibility(View.VISIBLE);
+            change_pw.setVisibility(View.GONE);
+            change_nick.setVisibility(View.GONE);
+            change_pic.setVisibility(View.GONE);
 //        } else if (id == R.id.nav_share) {
 //
         } else if (id == R.id.nav_logout) {
@@ -706,6 +895,334 @@ public class MainActivity extends AppCompatActivity
             }
             else{
                 Toast.makeText(MainActivity.this, "Network Error", Toast.LENGTH_LONG).show();
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+        }
+    }
+
+    public class DownloadTask extends AsyncTask<Void, Void, Boolean> {
+
+        private final String token;
+        private Check check;
+        private DetailCheck detailCheck1;
+        private DetailCheck detailCheck2;
+
+        class Check {
+            private String content;
+            private boolean success;
+
+            public boolean isSuccess() {
+                return success;
+            }
+
+            public void setSuccess(boolean success) {
+                this.success = success;
+            }
+
+            public String getContent() {
+                return content;
+            }
+
+            public void setContent(String content) {
+                this.content = content;
+            }
+        }
+
+        class DetailCheck{
+            private String pic;
+            private String author;
+            private String title;
+            private String place;
+
+            public String getPic() {
+                return pic;
+            }
+
+            public void setPic(String pic) {
+                this.pic = pic;
+            }
+
+            public String getAuthor() {
+                String temp = author;
+                try {
+                    temp = URLDecoder.decode(temp, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                return temp;
+            }
+
+            public void setAuthor(String author) {
+                this.author = author;
+            }
+
+            public String getTitle() {
+                String temp = title;
+                try {
+                    temp = URLDecoder.decode(temp, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                return temp;
+            }
+
+            public void setTitle(String title) {
+                this.title = title;
+            }
+
+            public String getPlace() {
+                String temp = place;
+                try {
+                    temp = URLDecoder.decode(temp, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                return temp;
+            }
+
+            public void setPlace(String place) {
+                this.place = place;
+            }
+        }
+
+        public class FileUtils {
+            private String path = Environment.getExternalStorageDirectory().toString() + "/DangerousorDownload";
+
+            public FileUtils() {
+                File file = new File(path);
+                if (!file.exists()) {
+                    file.mkdirs();
+                }
+            }
+
+            public File createFile(String FileName) {
+                return new File(path, FileName);
+            }
+        }
+
+        DownloadTask(String token) {
+            this.token = token;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            // TODO: attempt authentication against a network service.
+
+            StringBuilder response = null;
+            try {
+                // Simulate network access.
+//                Thread.sleep(2000);
+                URL url = new URL("http://111.231.100.212/videoname/" + this.token);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(8000);
+                connection.setReadTimeout(8000);
+                connection.setRequestProperty("Charset", "UTF-8");
+                InputStream in = connection.getInputStream();
+                BufferedReader reader;
+                reader = new BufferedReader(new InputStreamReader(in));
+                response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (response == null) {
+                return false;
+            }
+            Gson gson = new Gson();
+            check = gson.fromJson(response.toString(), Check.class);
+            fileName = check.getContent();
+
+            if(!check.isSuccess())
+                return false;
+
+            response = null;
+            try {
+                // Simulate network access.
+//                Thread.sleep(2000);
+                URL url = new URL("http://111.231.100.212/videodetail/" + fileName);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(8000);
+                connection.setReadTimeout(8000);
+                connection.setRequestProperty("Charset", "UTF-8");
+                InputStream in = connection.getInputStream();
+                BufferedReader reader;
+                reader = new BufferedReader(new InputStreamReader(in));
+                response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (response == null) {
+                return false;
+            }
+            gson = new Gson();
+            detailCheck1 = gson.fromJson(response.toString(), DetailCheck.class);
+
+            try {
+                // Simulate network access.
+//                Thread.sleep(2000);
+                URL url = new URL("http://111.231.100.212/video/" + fileName);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(8000);
+                connection.setReadTimeout(8000);
+                connection.setRequestProperty("Charset", "UTF-8");
+                InputStream in = connection.getInputStream();
+                FileOutputStream fileOutputStream;
+                FileUtils fileUtils = new FileUtils();
+                fileOutputStream = new FileOutputStream(fileUtils.createFile(fileName));
+                byte[] buf = new byte[1024];
+                int ch;
+                while ((ch = in.read(buf)) != -1) {
+                    fileOutputStream.write(buf, 0, ch);//将获取到的流写入文件中
+                }
+                fileOutputStream.flush();
+                fileOutputStream.close();
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+            if(first){
+                response = null;
+                try {
+                    // Simulate network access.
+//                Thread.sleep(2000);
+                    URL url = new URL("http://111.231.100.212/videoname/" + this.token);
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.setConnectTimeout(8000);
+                    connection.setReadTimeout(8000);
+                    connection.setRequestProperty("Charset", "UTF-8");
+                    InputStream in = connection.getInputStream();
+                    BufferedReader reader;
+                    reader = new BufferedReader(new InputStreamReader(in));
+                    response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                if (response == null) {
+                    return false;
+                }
+                gson = new Gson();
+                check = gson.fromJson(response.toString(), Check.class);
+                fileName2 = check.getContent();
+
+                response = null;
+                try {
+                    // Simulate network access.
+//                Thread.sleep(2000);
+                    URL url = new URL("http://111.231.100.212/videodetail/" + fileName2);
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.setConnectTimeout(8000);
+                    connection.setReadTimeout(8000);
+                    connection.setRequestProperty("Charset", "UTF-8");
+                    InputStream in = connection.getInputStream();
+                    BufferedReader reader;
+                    reader = new BufferedReader(new InputStreamReader(in));
+                    response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                if (response == null) {
+                    return false;
+                }
+                gson = new Gson();
+                detailCheck2 = gson.fromJson(response.toString(), DetailCheck.class);
+
+                try {
+                    // Simulate network access.
+//                Thread.sleep(2000);
+                    URL url = new URL("http://111.231.100.212/video/" + fileName2);
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.setConnectTimeout(8000);
+                    connection.setReadTimeout(8000);
+                    connection.setRequestProperty("Charset", "UTF-8");
+                    InputStream in = connection.getInputStream();
+                    FileOutputStream fileOutputStream;
+                    FileUtils fileUtils = new FileUtils();
+                    fileOutputStream = new FileOutputStream(fileUtils.createFile(fileName2));
+                    byte[] buf = new byte[1024];
+                    int ch;
+                    while ((ch = in.read(buf)) != -1) {
+                        fileOutputStream.write(buf, 0, ch);//将获取到的流写入文件中
+                    }
+                    fileOutputStream.flush();
+                    fileOutputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                first = false;
+            }
+            return check != null && check.isSuccess();
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+
+            if (success) {
+                if(first2) {
+                    reviewframe.setVisibility(View.GONE);
+                    video_main.setVisibility(View.VISIBLE);
+                    String bitMap;
+                    try {
+                        bitMap = detailCheck1.getPic().replace(' ', '+');
+                        byte[] bytes = Base64.decode(bitMap, Base64.NO_PADDING);
+                        authorBitmap.setImageBitmap(decodeByteArray(bytes, 0, bytes.length));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        bitMap = "";
+                        byte[] bytes = Base64.decode(bitMap, Base64.NO_PADDING);
+                        authorBitmap.setImageBitmap(decodeByteArray(bytes, 0, bytes.length));
+                    }
+                    authorNick.setText(detailCheck1.getAuthor());
+                    authorTitle.setText(detailCheck1.getTitle());
+                    authorLocation.setText(detailCheck1.getPlace());
+                    nextVideo.setVisibility(View.VISIBLE);
+                    detailCheck = detailCheck2;
+                    if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+                        videoView.setVideoPath(Environment.getExternalStorageDirectory().toString() + "/DangerousorDownload/" + fileName);//   /storage/emulated/0/RecordVideo/VID_20180618_181338.mp4
+                        videoView.start();
+                        videoView.requestFocus();
+                    }
+                    first2 = false;
+                }
+                else{
+                    nextVideo.setVisibility(View.VISIBLE);
+                    detailCheck = detailCheck1;
+                    fileName2 = fileName;
+                }
+            }
+            else{
+                Toast.makeText(MainActivity.this, "Network Error Or No Video On Server", Toast.LENGTH_LONG).show();
             }
         }
 

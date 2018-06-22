@@ -38,10 +38,15 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -216,7 +221,32 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     private boolean isEmailValid(String email) {
         //TODO: Replace this with your own logic
-        return email.contains("@");
+        int count = 0;
+        Pattern p = Pattern.compile("@");
+        Matcher m = p.matcher(email);
+        while (m.find()) {
+            count++;
+        }
+        if(count!=1)
+            return false;
+        int count2 = 0;
+        Pattern p2 = Pattern.compile("\\.");
+        Matcher m2 = p2.matcher(email.split("@")[1]);
+        while (m2.find()) {
+            count2++;
+        }
+        if(count2==0)
+            return false;
+        int count3 = 0;
+        Matcher m3 = p2.matcher(email.split("@")[0]);
+        while (m3.find()) {
+            count3++;
+        }
+        if(count3>0)
+            return false;
+        String regex="[a-zA-Z0-9]+";
+        Matcher x = Pattern.compile(regex).matcher(email.replace("@", "").replace(".", ""));
+        return x.matches() ;
     }
 
     private boolean isPasswordValid(String password) {
@@ -332,7 +362,13 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
 
             public String getContent() {
-                return content;
+                String temp = content;
+                try {
+                    temp = URLDecoder.decode(temp, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                return temp;
             }
 
             public void setContent(String content) {
@@ -417,7 +453,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
             if (success) {
                 finish();
-                SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
+                SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
                 SharedPreferences.Editor editor = pref.edit();
                 editor.putString("account", checkLogin.getContent());
                 editor.putString("email", mEmail);

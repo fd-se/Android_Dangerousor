@@ -21,8 +21,10 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
 
 public class StartActivity extends AppCompatActivity {
     UserLoginTaskByToken mAuthTask;
@@ -69,7 +71,13 @@ public class StartActivity extends AppCompatActivity {
 
 
             public String getContent() {
-                return content;
+                String temp = content;
+                try {
+                    temp = URLDecoder.decode(temp, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                return temp;
             }
 
             public void setContent(String content) {
@@ -161,7 +169,7 @@ public class StartActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 finish();
-                SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(StartActivity.this);
+                SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
                 SharedPreferences.Editor editor = pref.edit();
                 editor.putString("account", checkLogin.getContent());
                 if(checkLogin.getBitmap() != null)

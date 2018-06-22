@@ -25,8 +25,13 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -143,6 +148,12 @@ public class RegisterActivity extends AppCompatActivity {
         } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
+            try {
+                nickname = URLEncoder.encode(nickname, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+
             showProgress(true);
             mAuthTask = new UserRegisterTask(nickname, email, password, token);
             mAuthTask.execute((Void) null);
@@ -151,7 +162,32 @@ public class RegisterActivity extends AppCompatActivity {
 
     private boolean isEmailValid(String email) {
         //TODO: Replace this with your own logic
-        return email.contains("@");
+        int count = 0;
+        Pattern p = Pattern.compile("@");
+        Matcher m = p.matcher(email);
+        while (m.find()) {
+            count++;
+        }
+        if(count!=1)
+            return false;
+        int count2 = 0;
+        Pattern p2 = Pattern.compile("\\.");
+        Matcher m2 = p2.matcher(email.split("@")[1]);
+        while (m2.find()) {
+            count2++;
+        }
+        if(count2==0)
+            return false;
+        int count3 = 0;
+        Matcher m3 = p2.matcher(email.split("@")[0]);
+        while (m3.find()) {
+            count3++;
+        }
+        if(count3>0)
+            return false;
+        String regex="[a-zA-Z0-9]+";
+        Matcher x = Pattern.compile(regex).matcher(email.replace("@", "").replace(".", ""));
+        return x.matches() ;
     }
 
     private boolean isPasswordValid(String password) {
@@ -216,7 +252,13 @@ public class RegisterActivity extends AppCompatActivity {
 
 
             public String getContent() {
-                return content;
+                String temp = content;
+                try {
+                    temp = URLDecoder.decode(temp, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                return temp;
             }
 
             public void setContent(String content) {
@@ -294,13 +336,13 @@ public class RegisterActivity extends AppCompatActivity {
 
             if (success) {
                 finish();
-                SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(RegisterActivity.this);
+                SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
                 SharedPreferences.Editor editor = pref.edit();
                 editor.putString("account", checkRegister.getContent());
                 editor.putString("email", mEmail);
                 editor.putString("password", mPassword);
                 editor.apply();
-                Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
+                Intent intent = new Intent(RegisterActivity.this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
