@@ -431,7 +431,7 @@ public class MainActivity extends AppCompatActivity
                 }
                 DownloadTask downloadTask = new DownloadTask(token);
                 downloadTask.execute((Void) null);
-                Toast.makeText(MainActivity.this, "开始", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "开始缓存，请稍候", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -564,7 +564,7 @@ public class MainActivity extends AppCompatActivity
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_record) {
             Intent intent = new Intent(MainActivity.this, RecordVideo.class);
-            finish();
+//            finish();
             startActivity(intent);
             return true;
         }
@@ -695,7 +695,7 @@ public class MainActivity extends AppCompatActivity
             try {
                 // Simulate network access.
 //                Thread.sleep(2000);
-                URL url = new URL("http://111.231.100.212/logout");
+                URL url = new URL("http://" + Const.IP + "/logout");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setConnectTimeout(8000);
@@ -835,7 +835,7 @@ public class MainActivity extends AppCompatActivity
             try {
                 // Simulate network access.
 //                Thread.sleep(2000);
-                URL url = new URL("http://111.231.100.212/change");
+                URL url = new URL("http://" + Const.IP + "/change");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setConnectTimeout(8000);
@@ -1001,6 +1001,10 @@ public class MainActivity extends AppCompatActivity
             public File createFile(String FileName) {
                 return new File(path, FileName);
             }
+
+            public boolean isExist(String FileName){
+                return new File(path, FileName).exists();
+            }
         }
 
         DownloadTask(String token) {
@@ -1015,7 +1019,7 @@ public class MainActivity extends AppCompatActivity
             try {
                 // Simulate network access.
 //                Thread.sleep(2000);
-                URL url = new URL("http://111.231.100.212/videoname/" + this.token);
+                URL url = new URL("http://" + Const.IP + "/videoname/" + this.token);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
                 connection.setConnectTimeout(8000);
@@ -1048,7 +1052,7 @@ public class MainActivity extends AppCompatActivity
             try {
                 // Simulate network access.
 //                Thread.sleep(2000);
-                URL url = new URL("http://111.231.100.212/videodetail/" + fileName);
+                URL url = new URL("http://" + Const.IP + "/videodetail/" + fileName);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
                 connection.setConnectTimeout(8000);
@@ -1073,10 +1077,14 @@ public class MainActivity extends AppCompatActivity
             gson = new Gson();
             detailCheck1 = gson.fromJson(response.toString(), DetailCheck.class);
 
+            FileUtils fileUtils = new FileUtils();
+
+            if(!first && fileUtils.isExist(fileName))
+                return check != null && check.isSuccess();
             try {
                 // Simulate network access.
 //                Thread.sleep(2000);
-                URL url = new URL("http://111.231.100.212/video/" + fileName);
+                URL url = new URL("http://" + Const.IP + "/video/" + fileName);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
                 connection.setConnectTimeout(8000);
@@ -1084,7 +1092,6 @@ public class MainActivity extends AppCompatActivity
                 connection.setRequestProperty("Charset", "UTF-8");
                 InputStream in = connection.getInputStream();
                 FileOutputStream fileOutputStream;
-                FileUtils fileUtils = new FileUtils();
                 fileOutputStream = new FileOutputStream(fileUtils.createFile(fileName));
                 byte[] buf = new byte[1024];
                 int ch;
@@ -1104,7 +1111,7 @@ public class MainActivity extends AppCompatActivity
                 try {
                     // Simulate network access.
 //                Thread.sleep(2000);
-                    URL url = new URL("http://111.231.100.212/videoname/" + this.token);
+                    URL url = new URL("http://" + Const.IP + "/videoname/" + this.token);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("GET");
                     connection.setConnectTimeout(8000);
@@ -1133,7 +1140,7 @@ public class MainActivity extends AppCompatActivity
                 try {
                     // Simulate network access.
 //                Thread.sleep(2000);
-                    URL url = new URL("http://111.231.100.212/videodetail/" + fileName2);
+                    URL url = new URL("http://" + Const.IP + "/videodetail/" + fileName2);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("GET");
                     connection.setConnectTimeout(8000);
@@ -1160,7 +1167,7 @@ public class MainActivity extends AppCompatActivity
                 try {
                     // Simulate network access.
 //                Thread.sleep(2000);
-                    URL url = new URL("http://111.231.100.212/video/" + fileName2);
+                    URL url = new URL("http://" + Const.IP + "/video/" + fileName2);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("GET");
                     connection.setConnectTimeout(8000);
@@ -1168,7 +1175,6 @@ public class MainActivity extends AppCompatActivity
                     connection.setRequestProperty("Charset", "UTF-8");
                     InputStream in = connection.getInputStream();
                     FileOutputStream fileOutputStream;
-                    FileUtils fileUtils = new FileUtils();
                     fileOutputStream = new FileOutputStream(fileUtils.createFile(fileName2));
                     byte[] buf = new byte[1024];
                     int ch;
@@ -1190,6 +1196,7 @@ public class MainActivity extends AppCompatActivity
 
             if (success) {
                 if(first2) {
+                    Toast.makeText(MainActivity.this, "缓存完成，开始播放", Toast.LENGTH_SHORT).show();
                     reviewframe.setVisibility(View.GONE);
                     video_main.setVisibility(View.VISIBLE);
                     String bitMap;

@@ -406,7 +406,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             try {
                 // Simulate network access.
 //                Thread.sleep(2000);
-                URL url = new URL("http://111.231.100.212/login");
+                URL url = new URL("http://" + Const.IP + "/login");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setConnectTimeout(8000);

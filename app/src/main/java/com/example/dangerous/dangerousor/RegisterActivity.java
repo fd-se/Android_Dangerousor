@@ -289,7 +289,7 @@ public class RegisterActivity extends AppCompatActivity {
             try {
                 // Simulate network access.
 //                Thread.sleep(2000);
-                URL url = new URL("http://111.231.100.212/register");
+                URL url = new URL("http://" + Const.IP + "/register");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setConnectTimeout(8000);

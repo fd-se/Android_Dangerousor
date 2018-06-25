@@ -327,7 +327,7 @@ public class PlayVideoActivity extends AppCompatActivity implements MediaPlayer.
             try {
                 // Simulate network access.
 //                Thread.sleep(2000);
-                URL url = new URL("http://111.231.100.212/upload");
+                URL url = new URL("http://" + Const.IP + "/upload");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setConnectTimeout(8000);

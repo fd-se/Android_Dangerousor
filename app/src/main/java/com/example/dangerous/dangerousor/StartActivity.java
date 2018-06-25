@@ -113,7 +113,7 @@ public class StartActivity extends AppCompatActivity {
             try {
                 // Simulate network access.
 //                Thread.sleep(2000);
-                URL url = new URL("http://111.231.100.212/login_token");
+                URL url = new URL("http://" + Const.IP + "/login_token");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setConnectTimeout(8000);
