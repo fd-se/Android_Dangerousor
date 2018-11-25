@@ -83,6 +83,7 @@ public class MainActivity extends AppCompatActivity
     private TextView authorNick;
     private TextView authorTitle;
     private TextView authorLocation;
+    private TextView topic;
     private Button nextVideo;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
@@ -216,6 +217,7 @@ public class MainActivity extends AppCompatActivity
         authorNick = findViewById(R.id.authornick);
         authorTitle = findViewById(R.id.videotitle);
         authorLocation = findViewById(R.id.videoplace);
+        topic = findViewById(R.id.topic_text);
         nextVideo = findViewById(R.id.nextvideo);
         nickName = sharedPreferences.getString("account", "");
         eMail = sharedPreferences.getString("email", "");
@@ -401,6 +403,7 @@ public class MainActivity extends AppCompatActivity
                 }
                 authorNick.setText(detailCheck.getAuthor());
                 authorTitle.setText(detailCheck.getTitle());
+                topic.setText(detailCheck.getTopic());
                 authorLocation.setText(detailCheck.getPlace());
                 if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                     videoView.stopPlayback();
@@ -935,6 +938,7 @@ public class MainActivity extends AppCompatActivity
             private String pic;
             private String author;
             private String title;
+            private String topic;
             private String place;
 
             public String getPic() {
@@ -985,6 +989,20 @@ public class MainActivity extends AppCompatActivity
 
             public void setPlace(String place) {
                 this.place = place;
+            }
+
+            public String getTopic() {
+                String temp = topic;
+                try {
+                    temp = URLDecoder.decode(temp, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                return temp;
+            }
+
+            public void setTopic(String topic) {
+                this.topic = topic;
             }
         }
 
@@ -1212,6 +1230,7 @@ public class MainActivity extends AppCompatActivity
                     }
                     authorNick.setText(detailCheck1.getAuthor());
                     authorTitle.setText(detailCheck1.getTitle());
+                    topic.setText(detailCheck1.getTopic());
                     authorLocation.setText(detailCheck1.getPlace());
                     nextVideo.setVisibility(View.VISIBLE);
                     detailCheck = detailCheck2;
