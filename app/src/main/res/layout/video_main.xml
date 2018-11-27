@@ -40,6 +40,15 @@
         android:text="作者："
         android:textColor="@android:color/white" />
 
+    <ImageButton
+        android:id="@+id/favorbtn"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_alignStart="@+id/nextvideo"
+        android:layout_alignTop="@+id/authornick"
+        android:background="@android:color/transparent"
+        android:scaleType="fitCenter"
+        android:src="@drawable/btn_favorite"/>
     <TextView
         android:id="@+id/videotitle"
         android:layout_width="106dp"
@@ -70,4 +79,15 @@
         android:background="#00abedec"
         android:text="下一个"
         android:textColor="@android:color/white" />
+
+    <TextView
+        android:id="@+id/favorcount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/nextvideo"
+        android:layout_alignTop="@+id/authornick"
+        android:text="0人赞过"
+        android:textColor="@android:color/white" />
+
+
 </RelativeLayout>

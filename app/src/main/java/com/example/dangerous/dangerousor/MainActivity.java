@@ -1,5 +1,7 @@
 package com.example.dangerous.dangerousor;
 
+//播放、录制模块
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -34,6 +36,7 @@ import android.view.ViewGroup;
 import android.webkit.DownloadListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -83,6 +86,9 @@ public class MainActivity extends AppCompatActivity
     private TextView authorNick;
     private TextView authorTitle;
     private TextView authorLocation;
+    private ImageButton favorBtn;
+    private TextView favorCount;
+
     private Button nextVideo;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
@@ -216,6 +222,9 @@ public class MainActivity extends AppCompatActivity
         authorNick = findViewById(R.id.authornick);
         authorTitle = findViewById(R.id.videotitle);
         authorLocation = findViewById(R.id.videoplace);
+        favorBtn = findViewById(R.id.favorbtn);
+        favorCount = findViewById(R.id.favorcount);
+
         nextVideo = findViewById(R.id.nextvideo);
         nickName = sharedPreferences.getString("account", "");
         eMail = sharedPreferences.getString("email", "");
@@ -382,6 +391,18 @@ public class MainActivity extends AppCompatActivity
                         }
                     }
                 }
+            }
+        });
+
+        favorBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                /*
+                    后端获取该视频的点赞列表，比对用户token是否点赞过。
+                    该用户没有点赞过的，加入点赞，否则取消点赞（返回一个值标识两种情况）。
+                 */
+                FavorTask mTask = new FavorTask(token, nickName, fileName);   // filename是当前播放视频？
+                mTask.execute((Void) null);
             }
         });
 
@@ -1238,4 +1259,93 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+
+
+    public class FavorTask extends AsyncTask<Void, Void, Boolean> {
+
+        private final String token;
+        private final String nickname;
+        private final String filename;
+        private Check check;
+
+        class Check {
+            private boolean success;
+
+            public boolean isSuccess() {
+                return success;
+            }
+
+            public void setSuccess(boolean success) {
+                this.success = success;
+            }
+        }
+
+        FavorTask(String token, String nickname, String filename) {
+            this.token = token;
+            this.nickname = nickname;
+            this.filename = filename;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+
+            StringBuilder response = null;
+            try {
+                // Simulate network access.
+//                Thread.sleep(2000);
+                URL url = new URL("http://" + Const.IP + "/favor");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setConnectTimeout(8000);
+                connection.setReadTimeout(8000);
+                connection.setDoOutput(true);
+                DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+                out.writeBytes(String.format("token=%s&nickname=%s&filename=%s", token, nickname, filename));
+                InputStream in = connection.getInputStream();
+                BufferedReader reader;
+                reader = new BufferedReader(new InputStreamReader(in));
+                response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (response == null) {
+                return false;
+            }
+            Gson gson = new Gson();
+            check = gson.fromJson(response.toString(), Check.class);
+            return check != null && check.isSuccess();
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+
+            if (success) {
+
+                // 该用户没有点赞过本视频
+                if(true){
+
+                    favorBtn.setImageResource(R.drawable.btn_favored);
+                    Toast.makeText(MainActivity.this, "已点赞", Toast.LENGTH_LONG).show();
+                }
+                else{
+                    favorBtn.setImageResource(R.drawable.btn_favorite);
+                    Toast.makeText(MainActivity.this, "已取消点赞", Toast.LENGTH_LONG).show();
+                }
+            }
+            else{
+                Toast.makeText(MainActivity.this, "Network Error", Toast.LENGTH_LONG).show();
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+        }
+    }
 }
+
+
