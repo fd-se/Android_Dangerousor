@@ -29,6 +29,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -105,6 +106,7 @@ public class MainActivity extends AppCompatActivity
 
     private String fileName;
     private String fileName2;
+    private Boolean isLiked;
 
     private DownloadTask.DetailCheck detailCheck;
 
@@ -1157,6 +1159,8 @@ public class MainActivity extends AppCompatActivity
                 check = gson.fromJson(response.toString(), Check.class);
                 fileName2 = check.getContent();
 
+                Log.i("What is filename", fileName + " " + fileName2);
+
                 response = null;
                 try {
                     // Simulate network access.
@@ -1270,14 +1274,16 @@ public class MainActivity extends AppCompatActivity
 
         class Check {
             private boolean success;
+            private boolean like;
 
             public boolean isSuccess() {
                 return success;
             }
 
-            public void setSuccess(boolean success) {
-                this.success = success;
+            public boolean isLike() {
+                return like;
             }
+
         }
 
         FavorTask(String token, String nickname, String filename) {
@@ -1293,7 +1299,7 @@ public class MainActivity extends AppCompatActivity
             try {
                 // Simulate network access.
 //                Thread.sleep(2000);
-                URL url = new URL("http://" + Const.IP + "/favor");
+                URL url = new URL("http://" + Const.IP + "/mod_like");   // mod_like接口
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setConnectTimeout(8000);
@@ -1318,6 +1324,7 @@ public class MainActivity extends AppCompatActivity
             }
             Gson gson = new Gson();
             check = gson.fromJson(response.toString(), Check.class);
+            isLiked = check.isLike();
             return check != null && check.isSuccess();
         }
 
@@ -1327,7 +1334,7 @@ public class MainActivity extends AppCompatActivity
             if (success) {
 
                 // 该用户没有点赞过本视频
-                if(true){
+                if(!isLiked){
 
                     favorBtn.setImageResource(R.drawable.btn_favored);
                     Toast.makeText(MainActivity.this, "已点赞", Toast.LENGTH_LONG).show();
@@ -1346,6 +1353,7 @@ public class MainActivity extends AppCompatActivity
         protected void onCancelled() {
         }
     }
+
 }
 
 
