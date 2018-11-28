@@ -34,7 +34,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.DownloadListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -107,6 +106,8 @@ public class MainActivity extends AppCompatActivity
     private String fileName;
     private String fileName2;
     private Boolean isLiked;
+    private Boolean isLiked2;
+
 
     private DownloadTask.DetailCheck detailCheck;
 
@@ -936,6 +937,11 @@ public class MainActivity extends AppCompatActivity
         class Check {
             private String content;
             private boolean success;
+            // 是否被当前用户点赞过
+            private Boolean liked;
+
+            public Boolean isLiked() { return liked; }
+            public void setLiked(boolean liked) { this.liked = liked; }
 
             public boolean isSuccess() {
                 return success;
@@ -1067,6 +1073,7 @@ public class MainActivity extends AppCompatActivity
             Gson gson = new Gson();
             check = gson.fromJson(response.toString(), Check.class);
             fileName = check.getContent();
+            isLiked = check.isLiked();
 
             if(!check.isSuccess())
                 return false;
@@ -1158,6 +1165,7 @@ public class MainActivity extends AppCompatActivity
                 gson = new Gson();
                 check = gson.fromJson(response.toString(), Check.class);
                 fileName2 = check.getContent();
+                isLiked2 = check.isLiked();
 
                 Log.i("What is filename", fileName + " " + fileName2);
 
@@ -1238,8 +1246,18 @@ public class MainActivity extends AppCompatActivity
                     authorNick.setText(detailCheck1.getAuthor());
                     authorTitle.setText(detailCheck1.getTitle());
                     authorLocation.setText(detailCheck1.getPlace());
+
+                    // 点赞按钮状态
+                    if (!isLiked) {
+                        favorBtn.setImageResource(R.drawable.btn_favorite);
+                    }
+                    else {
+                        favorBtn.setImageResource(R.drawable.btn_favored);
+                    }
+
                     nextVideo.setVisibility(View.VISIBLE);
                     detailCheck = detailCheck2;
+                    isLiked = isLiked2;
                     if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                         videoView.setVideoPath(Environment.getExternalStorageDirectory().toString() + "/DangerousorDownload/" + fileName);//   /storage/emulated/0/RecordVideo/VID_20180618_181338.mp4
                         videoView.start();
