@@ -938,10 +938,10 @@ public class MainActivity extends AppCompatActivity
             private String content;
             private boolean success;
             // 是否被当前用户点赞过
-            private Boolean liked;
+            private Boolean like;
 
-            public Boolean isLiked() { return liked; }
-            public void setLiked(boolean liked) { this.liked = liked; }
+            public Boolean isLike() { return like; }
+            public void setLiked(boolean like) { this.like = like; }
 
             public boolean isSuccess() {
                 return success;
@@ -1073,7 +1073,7 @@ public class MainActivity extends AppCompatActivity
             Gson gson = new Gson();
             check = gson.fromJson(response.toString(), Check.class);
             fileName = check.getContent();
-            isLiked = check.isLiked();
+            isLiked = check.isLike();
 
             if(!check.isSuccess())
                 return false;
@@ -1165,7 +1165,7 @@ public class MainActivity extends AppCompatActivity
                 gson = new Gson();
                 check = gson.fromJson(response.toString(), Check.class);
                 fileName2 = check.getContent();
-                isLiked2 = check.isLiked();
+                isLiked2 = check.isLike();
 
                 Log.i("What is filename", fileName + " " + fileName2);
 
@@ -1269,6 +1269,7 @@ public class MainActivity extends AppCompatActivity
                     nextVideo.setVisibility(View.VISIBLE);
                     detailCheck = detailCheck1;
                     fileName2 = fileName;
+                    isLiked2 = isLiked;
                 }
             }
             else{
@@ -1291,16 +1292,32 @@ public class MainActivity extends AppCompatActivity
         private Check check;
 
         class Check {
+            private String content;
             private boolean success;
-            private boolean like;
+            // 是否被当前用户点赞过
+            private Boolean like;
+
+            public String getContent() {
+                return content;
+            }
+
+            public void setContent(String content) {
+                this.content = content;
+            }
 
             public boolean isSuccess() {
                 return success;
             }
 
+            public void setSuccess(boolean success) {
+                this.success = success;
+            }
+
             public boolean isLike() {
                 return like;
             }
+
+            public void setLiked(boolean like) { this.like = like; }
 
         }
 
