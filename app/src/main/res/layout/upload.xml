@@ -10,14 +10,14 @@
     <com.example.dangerous.dangerousor.view.MyVideoView
         android:id="@+id/videoView"
         android:layout_width="332dp"
-        android:layout_height="403dp"
+        android:layout_height="383dp"
         android:layout_gravity="center">
 
     </com.example.dangerous.dangerousor.view.MyVideoView>
 
     <android.support.design.widget.TextInputLayout
         android:layout_width="match_parent"
-        android:layout_height="67dp">
+        android:layout_height="wrap_content">
 
         <android.support.design.widget.TextInputEditText
             android:id="@+id/record_video_title"
@@ -27,6 +27,12 @@
             android:inputType="text" />
 
     </android.support.design.widget.TextInputLayout>
+
+    <Spinner
+        android:id="@+id/topic_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:entries="@array/topicarr"/>
 
     <LinearLayout
         android:layout_width="match_parent"
