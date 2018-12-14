@@ -16,17 +16,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
-<<<<<<< HEAD
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
-=======
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
->>>>>>> master
 import android.widget.Toast;
 
 import com.example.dangerous.dangerousor.util.mMediaController;
@@ -56,11 +50,8 @@ public class PlayVideoActivity extends AppCompatActivity implements MediaPlayer.
     private mMediaController controller;
     private String mVideoPath;
     private EditText editText;
-<<<<<<< HEAD
     private Spinner topic_spinner;
     private String topic;
-=======
->>>>>>> master
     private Button confirm;
     private Button cancel;
     private String token;
@@ -98,10 +89,7 @@ public class PlayVideoActivity extends AppCompatActivity implements MediaPlayer.
         setContentView(R.layout.now_playvideo);
 
         editText = findViewById(R.id.record_video_title);
-<<<<<<< HEAD
         topic_spinner = findViewById(R.id.topic_spinner);//初始化Spinner
-=======
->>>>>>> master
         confirm = findViewById(R.id.record_upload);
         cancel = findViewById(R.id.record_cancel);
         upload = findViewById(R.id.upload_include);
@@ -110,7 +98,6 @@ public class PlayVideoActivity extends AppCompatActivity implements MediaPlayer.
         locationManager = TencentLocationManager.getInstance(this);
 
 
-<<<<<<< HEAD
         topic_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
@@ -133,8 +120,6 @@ public class PlayVideoActivity extends AppCompatActivity implements MediaPlayer.
 
             }
         });
-=======
->>>>>>> master
 
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -381,11 +366,7 @@ public class PlayVideoActivity extends AppCompatActivity implements MediaPlayer.
                 connection.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
                 out.writeBytes(twoHyphens + boundary + end);
-<<<<<<< HEAD
                 out.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\""+ this.title + "+title+" + topic + "+topic+" + location + "+location+" + token + "+token+" + mVideoPath.replace("/storage/emulated/0/RecordVideo/", "") + "\"" + end);
-=======
-                out.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\""+ this.title + "+title+" + location + "+location+" + token + "+token+" + mVideoPath.replace("/storage/emulated/0/RecordVideo/", "") + "\"" + end);
->>>>>>> master
                 out.writeBytes("Content-Type:application/octet-stream;" + end);
                 out.writeBytes(end);
                 FileInputStream fis = new FileInputStream(mVideoPath);
