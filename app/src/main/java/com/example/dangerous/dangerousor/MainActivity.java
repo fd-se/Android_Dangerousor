@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity
     private TextView authorLocation;
     private ImageButton favorBtn;
     private TextView favorCount;
-
+    private TextView topic;
     private Button nextVideo;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
@@ -105,9 +105,13 @@ public class MainActivity extends AppCompatActivity
 
     private String fileName;
     private String fileName2;
+    private Integer videoId;
+    private Integer videoId2;
+    private Integer curVideoId;
     private Boolean isLiked;
     private Boolean isLiked2;
     private Integer likeCount;
+    private Integer likeCount2;
 
 
     private DownloadTask.DetailCheck detailCheck;
@@ -228,7 +232,7 @@ public class MainActivity extends AppCompatActivity
         authorLocation = findViewById(R.id.videoplace);
         favorBtn = findViewById(R.id.favorbtn);
         favorCount = findViewById(R.id.favorcount);
-
+        topic = findViewById(R.id.topic_text);
         nextVideo = findViewById(R.id.nextvideo);
         nickName = sharedPreferences.getString("account", "");
         eMail = sharedPreferences.getString("email", "");
@@ -405,7 +409,7 @@ public class MainActivity extends AppCompatActivity
                     后端获取该视频的点赞列表，比对用户token是否点赞过。
                     该用户没有点赞过的，加入点赞，否则取消点赞（返回一个值标识两种情况）。
                  */
-                FavorTask mTask = new FavorTask(token, nickName, fileName);   // filename是当前播放视频？
+                FavorTask mTask = new FavorTask(token, nickName, curVideoId);   // filename是当前播放视频？
                 mTask.execute((Void) null);
             }
         });
@@ -424,9 +428,18 @@ public class MainActivity extends AppCompatActivity
                     byte[] bytes = Base64.decode(bitMap, Base64.NO_PADDING);
                     authorBitmap.setImageBitmap(decodeByteArray(bytes, 0, bytes.length));
                 }
+                curVideoId = videoId2;
                 authorNick.setText(detailCheck.getAuthor());
                 authorTitle.setText(detailCheck.getTitle());
+                topic.setText(detailCheck.getTopic());
                 authorLocation.setText(detailCheck.getPlace());
+                favorCount.setText(Integer.toString(likeCount2)+"人赞过");
+                if (!isLiked2) {
+                    favorBtn.setImageResource(R.drawable.btn_favorite);
+                }
+                else {
+                    favorBtn.setImageResource(R.drawable.btn_favored);
+                }
                 if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                     videoView.stopPlayback();
                     videoView.setVideoPath(Environment.getExternalStorageDirectory().toString() + "/DangerousorDownload/" + fileName2);//   /storage/emulated/0/RecordVideo/VID_20180618_181338.mp4
@@ -941,6 +954,7 @@ public class MainActivity extends AppCompatActivity
             // 是否被当前用户点赞过
             private Boolean like;
             private Integer count;
+            private Integer videoid;
 
             public Integer getCount() {
                 return count;
@@ -968,12 +982,21 @@ public class MainActivity extends AppCompatActivity
             public void setContent(String content) {
                 this.content = content;
             }
+
+            public Integer getVideoid() {
+                return videoid;
+            }
+
+            public void setVideoid(Integer videoid) {
+                this.videoid = videoid;
+            }
         }
 
         class DetailCheck{
             private String pic;
             private String author;
             private String title;
+            private String topic;
             private String place;
 
             public String getPic() {
@@ -1024,6 +1047,20 @@ public class MainActivity extends AppCompatActivity
 
             public void setPlace(String place) {
                 this.place = place;
+            }
+
+            public String getTopic() {
+                String temp = topic;
+                try {
+                    temp = URLDecoder.decode(temp, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                return temp;
+            }
+
+            public void setTopic(String topic) {
+                this.topic = topic;
             }
         }
 
@@ -1085,6 +1122,7 @@ public class MainActivity extends AppCompatActivity
             fileName = check.getContent();
             isLiked = check.isLike();
             likeCount = check.getCount();
+            videoId = check.getVideoid();
 
             if(!check.isSuccess())
                 return false;
@@ -1093,7 +1131,7 @@ public class MainActivity extends AppCompatActivity
             try {
                 // Simulate network access.
 //                Thread.sleep(2000);
-                URL url = new URL("http://" + Const.IP + "/videodetail/" + fileName);
+                URL url = new URL("http://" + Const.IP + "/videodetail/" + Integer.toString(videoId));
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
                 connection.setConnectTimeout(8000);
@@ -1177,6 +1215,8 @@ public class MainActivity extends AppCompatActivity
                 check = gson.fromJson(response.toString(), Check.class);
                 fileName2 = check.getContent();
                 isLiked2 = check.isLike();
+                likeCount2 = check.getCount();
+                videoId2 = check.getVideoid();
 
                 Log.i("What is filename", fileName + " " + fileName2);
 
@@ -1184,7 +1224,7 @@ public class MainActivity extends AppCompatActivity
                 try {
                     // Simulate network access.
 //                Thread.sleep(2000);
-                    URL url = new URL("http://" + Const.IP + "/videodetail/" + fileName2);
+                    URL url = new URL("http://" + Const.IP + "/videodetail/" + Integer.toString(videoId2));
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("GET");
                     connection.setConnectTimeout(8000);
@@ -1257,6 +1297,7 @@ public class MainActivity extends AppCompatActivity
                     }
                     authorNick.setText(detailCheck1.getAuthor());
                     authorTitle.setText(detailCheck1.getTitle());
+                    topic.setText(detailCheck1.getTopic());
                     authorLocation.setText(detailCheck1.getPlace());
 
                     // 点赞按钮状态
@@ -1267,9 +1308,9 @@ public class MainActivity extends AppCompatActivity
                         favorBtn.setImageResource(R.drawable.btn_favored);
                     }
 
+                    curVideoId = videoId;
                     nextVideo.setVisibility(View.VISIBLE);
                     detailCheck = detailCheck2;
-                    isLiked = isLiked2;
                     if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                         videoView.setVideoPath(Environment.getExternalStorageDirectory().toString() + "/DangerousorDownload/" + fileName);//   /storage/emulated/0/RecordVideo/VID_20180618_181338.mp4
                         videoView.start();
@@ -1282,6 +1323,8 @@ public class MainActivity extends AppCompatActivity
                     detailCheck = detailCheck1;
                     fileName2 = fileName;
                     isLiked2 = isLiked;
+                    likeCount2 = likeCount;
+                    videoId2 = videoId;
                 }
             }
             else{
@@ -1300,7 +1343,7 @@ public class MainActivity extends AppCompatActivity
 
         private final String token;
         private final String nickname;
-        private final String filename;
+        private final Integer videoid;
         private Check check;
 
         class Check {
@@ -1344,10 +1387,10 @@ public class MainActivity extends AppCompatActivity
 
         }
 
-        FavorTask(String token, String nickname, String filename) {
+        FavorTask(String token, String nickname, Integer videoid) {
             this.token = token;
             this.nickname = nickname;
-            this.filename = filename;
+            this.videoid = videoid;
         }
 
         @Override
@@ -1364,7 +1407,7 @@ public class MainActivity extends AppCompatActivity
                 connection.setReadTimeout(8000);
                 connection.setDoOutput(true);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-                out.writeBytes(String.format("token=%s&nickname=%s&filename=%s", token, nickname, filename));
+                out.writeBytes(String.format("token=%s&nickname=%s&videoid=%s", token, nickname, videoid));
                 InputStream in = connection.getInputStream();
                 BufferedReader reader;
                 reader = new BufferedReader(new InputStreamReader(in));

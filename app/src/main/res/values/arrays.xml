@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="topicarr">
+        <item>选择一个话题标签</item>
+        <item>#搞笑#</item>
+        <item>#美景#</item>
+        <item>#LOL#</item>
+        <item>#明星#</item>
+        <item>#网红#</item>
+        <item>#日常#</item>
+    </string-array>
+</resources>

@@ -89,5 +89,12 @@
         android:text="0人赞过"
         android:textColor="@android:color/white" />
 
-
+    <TextView
+        android:id="@+id/topic_text"
+        android:layout_width="140dp"
+        android:layout_height="48dp"
+        android:layout_alignBottom="@+id/authorpic"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="101dp"
+        android:textColor="@android:color/white" />
 </RelativeLayout>
