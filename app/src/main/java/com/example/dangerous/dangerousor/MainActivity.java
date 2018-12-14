@@ -107,6 +107,7 @@ public class MainActivity extends AppCompatActivity
     private String fileName2;
     private Boolean isLiked;
     private Boolean isLiked2;
+    private Integer likeCount;
 
 
     private DownloadTask.DetailCheck detailCheck;
@@ -939,6 +940,15 @@ public class MainActivity extends AppCompatActivity
             private boolean success;
             // 是否被当前用户点赞过
             private Boolean like;
+            private Integer count;
+
+            public Integer getCount() {
+                return count;
+            }
+
+            public void setCount(Integer count) {
+                this.count = count;
+            }
 
             public Boolean isLike() { return like; }
             public void setLiked(boolean like) { this.like = like; }
@@ -1074,6 +1084,7 @@ public class MainActivity extends AppCompatActivity
             check = gson.fromJson(response.toString(), Check.class);
             fileName = check.getContent();
             isLiked = check.isLike();
+            likeCount = check.getCount();
 
             if(!check.isSuccess())
                 return false;
@@ -1230,6 +1241,7 @@ public class MainActivity extends AppCompatActivity
             if (success) {
                 if(first2) {
                     Toast.makeText(MainActivity.this, "缓存完成，开始播放", Toast.LENGTH_SHORT).show();
+                    favorCount.setText(Integer.toString(likeCount)+"人赞过");
                     reviewframe.setVisibility(View.GONE);
                     video_main.setVisibility(View.VISIBLE);
                     String bitMap;
@@ -1297,6 +1309,17 @@ public class MainActivity extends AppCompatActivity
             // 是否被当前用户点赞过
             private Boolean like;
 
+            public void setCount(Integer count) {
+                this.count = count;
+            }
+
+            public Integer getCount() {
+
+                return count;
+            }
+
+            private Integer count;
+
             public String getContent() {
                 return content;
             }
@@ -1360,6 +1383,8 @@ public class MainActivity extends AppCompatActivity
             Gson gson = new Gson();
             check = gson.fromJson(response.toString(), Check.class);
             isLiked = check.isLike();
+            Log.i("like","isLiked is" + isLiked.toString());
+            likeCount = check.getCount();
             return check != null && check.isSuccess();
         }
 
@@ -1367,6 +1392,8 @@ public class MainActivity extends AppCompatActivity
         protected void onPostExecute(final Boolean success) {
 
             if (success) {
+
+                favorCount.setText(Integer.toString(likeCount)+"人赞过");
 
                 // 该用户没有点赞过本视频
                 if(!isLiked){
