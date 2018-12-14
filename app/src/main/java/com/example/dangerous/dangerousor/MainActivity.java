@@ -1,5 +1,7 @@
 package com.example.dangerous.dangerousor;
 
+//播放、录制模块
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -27,13 +29,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.DownloadListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -83,6 +86,8 @@ public class MainActivity extends AppCompatActivity
     private TextView authorNick;
     private TextView authorTitle;
     private TextView authorLocation;
+    private ImageButton favorBtn;
+    private TextView favorCount;
     private TextView topic;
     private Button nextVideo;
     private SharedPreferences sharedPreferences;
@@ -100,6 +105,14 @@ public class MainActivity extends AppCompatActivity
 
     private String fileName;
     private String fileName2;
+    private Integer videoId;
+    private Integer videoId2;
+    private Integer curVideoId;
+    private Boolean isLiked;
+    private Boolean isLiked2;
+    private Integer likeCount;
+    private Integer likeCount2;
+
 
     private DownloadTask.DetailCheck detailCheck;
 
@@ -217,6 +230,8 @@ public class MainActivity extends AppCompatActivity
         authorNick = findViewById(R.id.authornick);
         authorTitle = findViewById(R.id.videotitle);
         authorLocation = findViewById(R.id.videoplace);
+        favorBtn = findViewById(R.id.favorbtn);
+        favorCount = findViewById(R.id.favorcount);
         topic = findViewById(R.id.topic_text);
         nextVideo = findViewById(R.id.nextvideo);
         nickName = sharedPreferences.getString("account", "");
@@ -387,6 +402,18 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        favorBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                /*
+                    后端获取该视频的点赞列表，比对用户token是否点赞过。
+                    该用户没有点赞过的，加入点赞，否则取消点赞（返回一个值标识两种情况）。
+                 */
+                FavorTask mTask = new FavorTask(token, nickName, curVideoId);   // filename是当前播放视频？
+                mTask.execute((Void) null);
+            }
+        });
+
         nextVideo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -401,10 +428,18 @@ public class MainActivity extends AppCompatActivity
                     byte[] bytes = Base64.decode(bitMap, Base64.NO_PADDING);
                     authorBitmap.setImageBitmap(decodeByteArray(bytes, 0, bytes.length));
                 }
+                curVideoId = videoId2;
                 authorNick.setText(detailCheck.getAuthor());
                 authorTitle.setText(detailCheck.getTitle());
                 topic.setText(detailCheck.getTopic());
                 authorLocation.setText(detailCheck.getPlace());
+                favorCount.setText(Integer.toString(likeCount2)+"人赞过");
+                if (!isLiked2) {
+                    favorBtn.setImageResource(R.drawable.btn_favorite);
+                }
+                else {
+                    favorBtn.setImageResource(R.drawable.btn_favored);
+                }
                 if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                     videoView.stopPlayback();
                     videoView.setVideoPath(Environment.getExternalStorageDirectory().toString() + "/DangerousorDownload/" + fileName2);//   /storage/emulated/0/RecordVideo/VID_20180618_181338.mp4
@@ -916,6 +951,21 @@ public class MainActivity extends AppCompatActivity
         class Check {
             private String content;
             private boolean success;
+            // 是否被当前用户点赞过
+            private Boolean like;
+            private Integer count;
+            private Integer videoid;
+
+            public Integer getCount() {
+                return count;
+            }
+
+            public void setCount(Integer count) {
+                this.count = count;
+            }
+
+            public Boolean isLike() { return like; }
+            public void setLiked(boolean like) { this.like = like; }
 
             public boolean isSuccess() {
                 return success;
@@ -931,6 +981,14 @@ public class MainActivity extends AppCompatActivity
 
             public void setContent(String content) {
                 this.content = content;
+            }
+
+            public Integer getVideoid() {
+                return videoid;
+            }
+
+            public void setVideoid(Integer videoid) {
+                this.videoid = videoid;
             }
         }
 
@@ -1062,6 +1120,9 @@ public class MainActivity extends AppCompatActivity
             Gson gson = new Gson();
             check = gson.fromJson(response.toString(), Check.class);
             fileName = check.getContent();
+            isLiked = check.isLike();
+            likeCount = check.getCount();
+            videoId = check.getVideoid();
 
             if(!check.isSuccess())
                 return false;
@@ -1070,7 +1131,7 @@ public class MainActivity extends AppCompatActivity
             try {
                 // Simulate network access.
 //                Thread.sleep(2000);
-                URL url = new URL("http://" + Const.IP + "/videodetail/" + fileName);
+                URL url = new URL("http://" + Const.IP + "/videodetail/" + Integer.toString(videoId));
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
                 connection.setConnectTimeout(8000);
@@ -1153,12 +1214,17 @@ public class MainActivity extends AppCompatActivity
                 gson = new Gson();
                 check = gson.fromJson(response.toString(), Check.class);
                 fileName2 = check.getContent();
+                isLiked2 = check.isLike();
+                likeCount2 = check.getCount();
+                videoId2 = check.getVideoid();
+
+                Log.i("What is filename", fileName + " " + fileName2);
 
                 response = null;
                 try {
                     // Simulate network access.
 //                Thread.sleep(2000);
-                    URL url = new URL("http://" + Const.IP + "/videodetail/" + fileName2);
+                    URL url = new URL("http://" + Const.IP + "/videodetail/" + Integer.toString(videoId2));
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("GET");
                     connection.setConnectTimeout(8000);
@@ -1215,6 +1281,7 @@ public class MainActivity extends AppCompatActivity
             if (success) {
                 if(first2) {
                     Toast.makeText(MainActivity.this, "缓存完成，开始播放", Toast.LENGTH_SHORT).show();
+                    favorCount.setText(Integer.toString(likeCount)+"人赞过");
                     reviewframe.setVisibility(View.GONE);
                     video_main.setVisibility(View.VISIBLE);
                     String bitMap;
@@ -1232,6 +1299,16 @@ public class MainActivity extends AppCompatActivity
                     authorTitle.setText(detailCheck1.getTitle());
                     topic.setText(detailCheck1.getTopic());
                     authorLocation.setText(detailCheck1.getPlace());
+
+                    // 点赞按钮状态
+                    if (!isLiked) {
+                        favorBtn.setImageResource(R.drawable.btn_favorite);
+                    }
+                    else {
+                        favorBtn.setImageResource(R.drawable.btn_favored);
+                    }
+
+                    curVideoId = videoId;
                     nextVideo.setVisibility(View.VISIBLE);
                     detailCheck = detailCheck2;
                     if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
@@ -1245,6 +1322,9 @@ public class MainActivity extends AppCompatActivity
                     nextVideo.setVisibility(View.VISIBLE);
                     detailCheck = detailCheck1;
                     fileName2 = fileName;
+                    isLiked2 = isLiked;
+                    likeCount2 = likeCount;
+                    videoId2 = videoId;
                 }
             }
             else{
@@ -1257,4 +1337,128 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+
+
+    public class FavorTask extends AsyncTask<Void, Void, Boolean> {
+
+        private final String token;
+        private final String nickname;
+        private final Integer videoid;
+        private Check check;
+
+        class Check {
+            private String content;
+            private boolean success;
+            // 是否被当前用户点赞过
+            private Boolean like;
+
+            public void setCount(Integer count) {
+                this.count = count;
+            }
+
+            public Integer getCount() {
+
+                return count;
+            }
+
+            private Integer count;
+
+            public String getContent() {
+                return content;
+            }
+
+            public void setContent(String content) {
+                this.content = content;
+            }
+
+            public boolean isSuccess() {
+                return success;
+            }
+
+            public void setSuccess(boolean success) {
+                this.success = success;
+            }
+
+            public boolean isLike() {
+                return like;
+            }
+
+            public void setLiked(boolean like) { this.like = like; }
+
+        }
+
+        FavorTask(String token, String nickname, Integer videoid) {
+            this.token = token;
+            this.nickname = nickname;
+            this.videoid = videoid;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+
+            StringBuilder response = null;
+            try {
+                // Simulate network access.
+//                Thread.sleep(2000);
+                URL url = new URL("http://" + Const.IP + "/mod_like");   // mod_like接口
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setConnectTimeout(8000);
+                connection.setReadTimeout(8000);
+                connection.setDoOutput(true);
+                DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+                out.writeBytes(String.format("token=%s&nickname=%s&videoid=%s", token, nickname, videoid));
+                InputStream in = connection.getInputStream();
+                BufferedReader reader;
+                reader = new BufferedReader(new InputStreamReader(in));
+                response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (response == null) {
+                return false;
+            }
+            Gson gson = new Gson();
+            check = gson.fromJson(response.toString(), Check.class);
+            isLiked = check.isLike();
+            Log.i("like","isLiked is" + isLiked.toString());
+            likeCount = check.getCount();
+            return check != null && check.isSuccess();
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+
+            if (success) {
+
+                favorCount.setText(Integer.toString(likeCount)+"人赞过");
+
+                // 该用户没有点赞过本视频
+                if(!isLiked){
+
+                    favorBtn.setImageResource(R.drawable.btn_favored);
+                    Toast.makeText(MainActivity.this, "已点赞", Toast.LENGTH_LONG).show();
+                }
+                else{
+                    favorBtn.setImageResource(R.drawable.btn_favorite);
+                    Toast.makeText(MainActivity.this, "已取消点赞", Toast.LENGTH_LONG).show();
+                }
+            }
+            else{
+                Toast.makeText(MainActivity.this, "Network Error", Toast.LENGTH_LONG).show();
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+        }
+    }
+
 }
+
+
